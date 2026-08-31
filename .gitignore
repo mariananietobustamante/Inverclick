@@ -6,8 +6,9 @@ __pycache__/
 # Variables de entorno
 .env
 
-# VS Code
+# VS Code / IDE
 .vscode/
+.idea/
 
 # Supabase
 supabase/.temp/
