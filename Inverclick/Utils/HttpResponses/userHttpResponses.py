@@ -41,8 +41,20 @@ class UserHttpResponses:
         return HTTPException(status_code=404, detail="País no encontrado")
 
     @staticmethod
+    def error_prefix_not_found() -> HTTPException:
+        return HTTPException(status_code=404, detail="Prefijo telefónico no encontrado")
+
+    @staticmethod
+    def error_id_type_not_found() -> HTTPException:
+        return HTTPException(status_code=404, detail="Tipo de identificación no encontrado")
+
+    @staticmethod
     def error_role_not_found() -> HTTPException:
         return HTTPException(status_code=404, detail="Rol de usuario no encontrado")
+
+    @staticmethod
+    def error_validation(message: str) -> HTTPException:
+        return HTTPException(status_code=400, detail=message)
 
     @staticmethod
     def error_invalid_length(field: str, min_length: int, max_length: int) -> HTTPException:

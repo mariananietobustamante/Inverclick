@@ -1,74 +1,75 @@
 # database.py
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from dotenv import load_dotenv
 
-# Cargar las variables de entorno
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
 load_dotenv()
 
-# Obtener la URL (Asegúrate de que no devuelva None)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Crear el engine con search_path configurado al esquema inverclick
 engine = create_engine(
     DATABASE_URL,
     echo=True,
-    connect_args={"options": "-c search_path=inverclick,public"} if DATABASE_URL and DATABASE_URL.startswith("postgresql") else {}
+    connect_args={"options": "-c search_path=public"} if DATABASE_URL and DATABASE_URL.startswith("postgresql") else {},
 )
 
-# Configurar la fábrica de sesiones
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Clase base para definir nuestros modelos (Sintaxis SQLAlchemy 2.0)
+
 class Base(DeclarativeBase):
     pass
 
-# Dependencia para inyectar la sesión en tus rutas o servicios
+
+def _register_models() -> None:
+    import Models  # noqa: F401
+
+
+_register_models()
+
+
 def get_db():
     db = SessionLocal()
     try:
+        from Repositories.seed_reference_data import ensure_default_roles, ensure_id_types
+
+        ensure_id_types(db)
+        ensure_default_roles(db)
         yield db
     finally:
         db.close()
 
-# Función para verificar la conexión y la estructura de las tablas sin alterarlas
+
 def verify_db_connection_and_schema():
     from sqlalchemy import inspect, text
-    from Models.users import UserDTO  # Importación diferida para evitar ciclos
-    
+
+    from Models.users import UserDTO
+
     try:
-        # 1. Verificar la conexión básica ejecutando una consulta rápida
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
             print("DATABASE: Conexión establecida con éxito.")
-            
-            # 2. Inspeccionar la base de datos
+
             inspector = inspect(engine)
             table_name = UserDTO.__tablename__
             schema = UserDTO.__table__.schema
-            
-            # Verificar si la tabla existe
+
             if not inspector.has_table(table_name, schema=schema):
-                if schema and inspector.has_table(table_name):
-                    schema = None
-                else:
-                    print(f"DATABASE ERROR: La tabla '{table_name}' no existe en la base de datos.")
-                    return False
-                
-            # 3. Verificar que las columnas coincidan
-            db_columns = {col["name"]: col for col in inspector.get_columns(table_name, schema=schema)}
-            model_columns = UserDTO.__table__.columns
-            
-            for col in model_columns:
-                if col.name not in db_columns:
-                    print(f"DATABASE ERROR: La columna '{col.name}' definida en el modelo no existe en la tabla real.")
-                    return False
-            
+                print(f"DATABASE ERROR: La tabla '{table_name}' no existe en la base de datos.")
+                return False
+
+            db_columns = {col["name"] for col in inspector.get_columns(table_name, schema=schema)}
+            required_columns = {"id", "name", "surname", "email", "id_number", "id_type_id", "role_id"}
+
+            missing = required_columns - db_columns
+            if missing:
+                print(f"DATABASE ERROR: Faltan columnas en '{table_name}': {', '.join(sorted(missing))}")
+                return False
+
             print(f"DATABASE: Estructura de la tabla '{table_name}' verificada y correcta.")
             return True
-            
+
     except Exception as e:
         print(f"DATABASE ERROR: Fallo al verificar la conexión o estructura: {e}")
         return False
-

@@ -1,38 +1,298 @@
 # Inverclick API
 
-## 1. Configuración Inicial
+API REST para el semillero de investigación Inverclick. Construida con **FastAPI**, **SQLAlchemy** y **Supabase PostgreSQL**.
+
+---
+
+## 1. Configuración inicial
+
+### Requisitos
+
+- Python 3.11+
+- Cuenta y proyecto en [Supabase](https://supabase.com) (o PostgreSQL local)
+
+### Entorno virtual e instalación
+
+Desde la carpeta `Inverclick/`:
 
 ```bash
-# Crear entorno virtual
 python -m venv .venv
 
-# Activar entorno virtual en Windows PowerShell
+# Windows PowerShell
 .\.venv\Scripts\Activate.ps1
 
 # Instalar dependencias
-pip install fastapi "uvicorn[standard]" pydantic supabase sqlalchemy psycopg2-binary python-dotenv
+pip install fastapi "uvicorn[standard]" pydantic supabase sqlalchemy psycopg2-binary python-dotenv PyJWT bcrypt
+```
+
+### Variables de entorno
+
+Crea un archivo `.env` en `Inverclick/` (no se sube a git):
+
+```env
+DATABASE_URL=postgresql://usuario:password@host:5432/postgres?options=-csearch_path%3Dpublic
+JWT_SECRET_KEY=tu-clave-secreta-en-produccion
+JWT_EXPIRE_MINUTES=60
+```
+
+| Variable | Obligatoria | Descripción |
+|----------|-------------|-------------|
+| `DATABASE_URL` | Sí | Cadena de conexión PostgreSQL (esquema `public`) |
+| `JWT_SECRET_KEY` | No | Clave para firmar tokens JWT (hay valor por defecto solo para desarrollo) |
+| `JWT_EXPIRE_MINUTES` | No | Duración del token en minutos (default: `60`) |
+| `JWT_ALGORITHM` | No | Algoritmo JWT (default: `HS256`) |
+
+---
+
+## 2. Ejecución del proyecto
+
+### Opción A: Uvicorn CLI (recomendado)
+
+```bash
+cd Inverclick
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
+### Opción B: Directamente con Python
+
+```bash
+python main.py
+python main.py --host 0.0.0.0 --port 8080 --reload
+```
+
+### Documentación interactiva
+
+- Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+
+---
+
+## 3. Seguridad (HU Seguridad V2)
+
+### Resumen
+
+| Criterio | Implementación |
+|----------|----------------|
+| Roles y módulos | Tabla `user_roles` con campo `modules[]` |
+| Contraseñas | Bcrypt en `user_login.password_hash` |
+| Autenticación | JWT Bearer con expiración configurable |
+| Autorización | Dependencia `require_module()` por endpoint |
+
+### Archivos principales
+
+| Archivo | Responsabilidad |
+|---------|-----------------|
+| `Services/Security/CryptPass.py` | Hash y verificación de contraseñas (bcrypt) |
+| `Services/Security/JwtService.py` | Creación y decodificación de tokens JWT |
+| `Services/Security/auth_dependencies.py` | `get_current_user`, `require_module` |
+| `Models/auth.py` | `AuthContext`, `LoginTokenResponseSchema` |
+| `Repositories/seed_reference_data.py` | Seed de `id_types` y roles por defecto |
+
+### Módulos de la API
+
+Definidos en `Utils/enums.py` (`AppModule`):
+
+| Módulo | Endpoints protegidos |
+|--------|----------------------|
+| `users` | CRUD de usuarios (excepto creación) |
+| `prefix` | Prefijos telefónicos |
+| `users-role` | CRUD de roles |
+| `users-login` | CRUD de logins (excepto creación y login) |
+
+Un rol con el módulo `"all"` en `user_roles.modules` tiene acceso a todos los módulos.
+
+### Endpoints públicos (sin token)
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/users` | Crear usuario |
+| `POST` | `/users-login` | Crear credenciales de login |
+| `POST` | `/users-login/login` | Iniciar sesión |
+
+El resto de endpoints requieren header `Authorization: Bearer <token>`.
+
+### Flujo de prueba en Swagger
+
+**1. Crear usuario** — `POST /users`
+
+```json
+{
+  "name": "Mariana",
+  "last_name": "Lopez",
+  "email": "mariana@ejemplo.com",
+  "identification": "1234567890",
+  "identification_type": "CC",
+  "phone_number": "3001234567",
+  "desired_description": "Quiero invertir",
+  "user_id_role": 1
+}
+```
+
+> El usuario debe tener `user_id_role` asignado para poder iniciar sesión. Usa `1` (admin) si existe un rol con módulo `"all"`.
+
+**2. Crear login** — `POST /users-login`
+
+```json
+{
+  "user_id": 1,
+  "email": "mariana@ejemplo.com",
+  "password": "MiClave123"
+}
+```
+
+**3. Iniciar sesión** — `POST /users-login/login`
+
+```json
+{
+  "email": "mariana@ejemplo.com",
+  "password": "MiClave123"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "access_token": "eyJ...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "user_id": 1,
+  "email": "mariana@ejemplo.com",
+  "role": "admin",
+  "modules": ["users", "prefix", "users-role", "users-login"]
+}
+```
+
+**4. Autorizar en Swagger**
+
+- Clic en **Authorize**
+- Ingresa: `Bearer <access_token>` (o solo el token, según el campo)
+- Prueba endpoints protegidos, por ejemplo `GET /users`
+
+### Códigos de error de seguridad
+
+| Código | Situación |
+|--------|-----------|
+| `401` | Token ausente, inválido o expirado |
+| `403` | Usuario sin rol, sin módulos, o sin permiso para el módulo |
+| `404` | Usuario o credenciales no encontradas |
+
+---
+
+## 4. Validaciones de negocio
+
+### Archivos
+
+| Archivo | Descripción |
+|---------|-------------|
+| `Utils/user_field_validators.py` | Funciones de validación de campos |
+| `Utils/user_validator.py` | Orquestador `validate_user_business_rules()` |
+| `Services/Impl/UsuariosService.py` | Aplica validaciones en `create()` y `update()` |
+| `Utils/HttpResponses/userHttpResponses.py` | Respuesta HTTP 400 con mensaje descriptivo |
+
+### Reglas aplicadas
+
+| Campo API | Validación |
+|-----------|------------|
+| `name`, `last_name` | Solo letras y espacios (incluye tildes y ñ), 2–50 caracteres |
+| `identification_type` | Debe ser `CC`, `CE`, `PAS`, `NIT` o `PEP` |
+| `identification` | Solo números, 6–15 dígitos |
+| `email` | Formato válido (`usuario@dominio.com`) |
+| `phone_number` | Solo números, 7–10 dígitos (obligatorio al crear) |
+
+En **creación** se validan todos los campos obligatorios. En **actualización** solo se validan los campos enviados en el body.
+
+### Cómo probar validaciones
+
+Usa `POST /users` en Swagger (no requiere token). Un body inválido devuelve **400** con el mensaje en `detail`.
+
+Ejemplos que deben fallar:
+
+```json
+{ "email": "correo-sin-arroba" }
+→ "El correo no tiene un formato válido (ejemplo: usuario@dominio.com)."
+
+{ "name": "Juan123" }
+→ "El nombre solo debe contener letras y espacios."
+
+{ "identification_type": "XX" }
+→ "'XX' no es un tipo de documento válido..."
+
+{ "identification": "123" }
+→ "La identificación debe tener entre 6 y 15 dígitos."
+
+{ "phone_number": "300abc" }
+→ "El celular solo debe contener números."
 ```
 
 ---
 
-## 2. Ejecución del Proyecto
+## 5. Mapeo API ↔ Base de datos
 
-### Opción A: Directamente con Python (`main.py`)
-```bash
-# Ejecución básica (puerto 8000, 127.0.0.1, recarga activa)
-python main.py
+La API expone nombres legibles; la BD usa los nombres reales de Supabase. El mapeo está en `Utils/mappers/`.
 
-# Parámetros personalizados
-python main.py --host 0.0.0.0 --port 8080 --reload --log-level debug
+| Campo API | Columna BD |
+|-----------|------------|
+| `last_name` | `surname` |
+| `identification` | `id_number` |
+| `identification_type` | `id_type_id` (lookup en `id_types`) |
+| `user_id_role` | `role_id` |
+| `residence_city` | `city` |
+| `street_address` | `address` |
+| `phone_number` | `phone` |
+| `monthly_income` / `monthly_outcome` | `income` / `outcome` |
+| `desired_description` | `description` |
+| `date_of_birth` | `birth_date` |
 
-# Producción con múltiples workers (deshabilita reload automáticamente)
-python main.py --host 0.0.0.0 --port 8000 --workers 4 --no-reload
+### Tablas principales
 
-# Ver ayuda de parámetros
-python main.py --help
+- `users`, `user_login`, `user_roles`
+- `countries`, `num_prefix`, `id_types`, `currencies`
+
+### Seed automático
+
+Al iniciar la API, si las tablas `id_types` o `user_roles` están vacías, se insertan datos base (`Repositories/seed_reference_data.py`):
+
+- **Tipos de documento:** CC, CE, PAS, NIT, PEP
+- **Roles:** `admin` (todos los módulos), `cliente`, `operador`
+
+---
+
+## 6. Estructura del proyecto
+
+```
+Inverclick/
+├── Controllers/          # Rutas FastAPI
+├── Models/               # DTOs SQLAlchemy y schemas Pydantic
+├── Repositories/         # Acceso a datos
+├── Services/
+│   ├── Impl/             # Lógica de negocio
+│   └── Security/         # JWT, bcrypt, autorización
+├── Utils/
+│   ├── mappers/          # Mapeo API ↔ BD
+│   ├── HttpResponses/    # Respuestas HTTP estandarizadas
+│   ├── enums.py          # Tipos de documento y módulos
+│   └── user_field_validators.py
+├── supabase/migrations/  # Esquema remoto
+├── main.py
+└── .env                  # Variables locales (no versionado)
 ```
 
-### Opción B: Mediante Uvicorn CLI
+---
+
+## 7. Supabase local (opcional)
+
 ```bash
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
+npx supabase start
 ```
+
+La migración de referencia del esquema remoto está en `supabase/migrations/20260831214418_remote_schema.sql`.
+
+---
+
+## 8. Notas
+
+- El esquema de PostgreSQL es **`public`**, no `inverclick`.
+- Usuarios sin `user_id_role` no pueden iniciar sesión (403).
+- En producción, define siempre `JWT_SECRET_KEY` con un valor seguro.
+- Las respuestas **422** en Swagger son validaciones de Pydantic (formato del JSON); las **400** son reglas de negocio.

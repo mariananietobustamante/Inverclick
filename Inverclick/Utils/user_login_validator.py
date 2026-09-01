@@ -8,8 +8,8 @@ class UserLoginValidator:
     # Definición de restricciones de longitud por campo: (min_length, max_length)
     # user_password permite contraseñas en texto plano de hasta 100 caracteres.
     FIELD_LENGTHS: dict[str, tuple[int, int]] = {
-        "user_login": (1, 100),
-        "user_password": (1, 100),
+        "email": (1, 255),
+        "user_password": (1, 255),
     }
 
     @classmethod

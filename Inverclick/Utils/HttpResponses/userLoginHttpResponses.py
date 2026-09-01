@@ -34,7 +34,7 @@ class UserLoginHttpResponses:
 
     @staticmethod
     def error_login_already_exists() -> HTTPException:
-        return HTTPException(status_code=400, detail="El usuario de login (user_login) ya existe")
+        return HTTPException(status_code=400, detail="El usuario ya tiene credenciales de login registradas")
 
     @staticmethod
     def error_login_not_created() -> HTTPException:
@@ -47,6 +47,14 @@ class UserLoginHttpResponses:
     @staticmethod
     def error_account_inactive() -> HTTPException:
         return HTTPException(status_code=403, detail="La cuenta de usuario se encuentra inactiva")
+
+    @staticmethod
+    def error_role_not_assigned() -> HTTPException:
+        return HTTPException(status_code=403, detail="El usuario no tiene un rol asignado")
+
+    @staticmethod
+    def error_role_without_modules() -> HTTPException:
+        return HTTPException(status_code=403, detail="El rol del usuario no tiene módulos asignados")
 
     @staticmethod
     def error_invalid_length(field: str, min_length: int, max_length: int) -> HTTPException:

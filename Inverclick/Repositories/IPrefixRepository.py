@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
+
 from Models.prefix import Prefix
+
 
 class IPrefixRepository:
     def get_by_id(self, prefix_id: int) -> Prefix | None:
@@ -8,5 +10,5 @@ class IPrefixRepository:
     def get_all(self, skip: int = 0, limit: int = 100) -> list[Prefix]:
         pass
 
-    def get_by_code(self, code: str) -> Prefix | None:
+    def get_by_prefix(self, prefix: str) -> Prefix | None:
         pass

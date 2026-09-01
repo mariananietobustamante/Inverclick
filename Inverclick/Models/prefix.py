@@ -1,3 +1,5 @@
-from Models.countries import Prefix
+from Models.num_prefix import NumPrefix
 
-__all__ = ["Prefix"]
+Prefix = NumPrefix
+
+__all__ = ["Prefix", "NumPrefix"]

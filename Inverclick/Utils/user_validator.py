@@ -1,18 +1,20 @@
 from datetime import date, datetime
-from typing import Optional, Tuple, Any
+from typing import Any, Optional, Tuple
+
+from Utils.user_field_validators import validar_campos_usuario
+
 
 class UserValidator:
     """
-    Utilidad para verificar y validar las longitudes de los campos del objeto UserDTO o diccionario.
+    Utilidad para verificar y validar los campos del objeto UserDTO o diccionario.
     """
 
-    # Definición de restricciones de longitud por campo: (min_length, max_length)
     FIELD_LENGTHS: dict[str, tuple[int, int]] = {
         "name": (1, 100),
         "last_name": (1, 100),
         "email": (1, 100),
         "identification": (1, 100),
-        "identification_type": (1, 3),
+        "identification_type": (1, 10),
         "residence_city": (1, 20),
         "street_address": (1, 100),
         "zip_code": (1, 100),
@@ -25,12 +27,6 @@ class UserValidator:
 
     @classmethod
     def validate_user_dto_lengths(cls, user_obj: Any) -> Optional[Tuple[str, int, int]]:
-        """
-        Valida las longitudes de todos los campos de texto presentes en un objeto UserDTO o dict.
-
-        :param user_obj: Instancia de UserDTO o diccionario a validar.
-        :return: None si todos los campos son válidos; de lo contrario, tupla (campo, min_len, max_len).
-        """
         for field, (min_len, max_len) in cls.FIELD_LENGTHS.items():
             if isinstance(user_obj, dict):
                 value = user_obj.get(field)
@@ -47,14 +43,14 @@ class UserValidator:
         return None
 
     @classmethod
-    def validate_field_length(cls, field_name: str, value: Any) -> Optional[Tuple[str, int, int]]:
-        """
-        Valida la longitud de un campo específico.
+    def validate_user_business_rules(cls, user_obj: Any, *, is_create: bool = False) -> Optional[str]:
+        data = user_obj if isinstance(user_obj, dict) else user_obj.model_dump(exclude_none=is_create)
+        if not is_create and hasattr(user_obj, "model_dump"):
+            data = user_obj.model_dump(exclude_unset=True)
+        return validar_campos_usuario(data, is_create=is_create)
 
-        :param field_name: Nombre del campo.
-        :param value: Valor del campo.
-        :return: None si la longitud es válida; de lo contrario, tupla (campo, min_len, max_len).
-        """
+    @classmethod
+    def validate_field_length(cls, field_name: str, value: Any) -> Optional[Tuple[str, int, int]]:
         if field_name in cls.FIELD_LENGTHS and value is not None:
             if isinstance(value, (date, datetime)):
                 return None

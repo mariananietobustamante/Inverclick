@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
 from typing import Any
+
+from Models.users_role import UserRoleCreateSchema, UserRoleDTO, UserRoleUpdateSchema
 from Repositories.IUsersRoleRepository import IUsersRoleRepository
-from Models.users_role import UserRoleDTO
 from Utils.HttpResponses.userRoleHttpResponses import UserRoleHttpResponses
 from Utils.user_role_validator import UserRoleValidator
 
@@ -44,8 +46,19 @@ class UsersRoleService:
         roles: list[UserRoleDTO] = self.repository.get_all(skip, limit)
         return roles
 
-    def create(self, roleDTO: UserRoleDTO) -> UserRoleDTO:
-        role_dto = validateUserRole(self, roleDTO)
+    def create(self, roleDTO: UserRoleDTO | UserRoleCreateSchema) -> UserRoleDTO:
+        if isinstance(roleDTO, UserRoleCreateSchema):
+            role_dto = UserRoleDTO(
+                role=roleDTO.role,
+                modules=roleDTO.modules or [],
+                created_at=datetime.now(timezone.utc),
+            )
+        else:
+            role_dto = roleDTO
+            if role_dto.created_at is None:
+                role_dto.created_at = datetime.now(timezone.utc)
+
+        role_dto = validateUserRole(self, role_dto)
         role: UserRoleDTO = self.repository.create(role_dto)
         if role is None:
             raise self.http_responses.error_role_not_created()

@@ -1,56 +1,58 @@
-# users_login.py
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Identity
-from sqlalchemy.orm import Mapped, mapped_column
+
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, Text
+from sqlalchemy.orm import Mapped, mapped_column
+
 from Repositories.database import Base
 
+
 class UserLoginDTO(Base):
-    __tablename__ = "users_login"
-    __table_args__ = {"schema": "inverclick"}
+    __tablename__ = "user_login"
 
-    id: Mapped[int] = mapped_column(Integer, Identity(always=False, start=1), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[int] = mapped_column(
-        Integer, 
-        ForeignKey("inverclick.users.id", ondelete="CASCADE"), 
-        nullable=False
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
     )
-    user_login: Mapped[str] = mapped_column(String(100), nullable=False)
-    user_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, default=datetime.utcnow)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, default=datetime.utcnow, onupdate=datetime.utcnow)
-    active: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=True)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    failed_login_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    refresh_token_hash: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    refresh_token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-# --- Esquemas Pydantic con validación estricta (extra='forbid') ---
 
 class LoginRequestSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    user_login: str
+    email: str
     user_password: str
+
 
 class UserLoginCreateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     user_id: int
-    user_login: str
-    user_password: Optional[str] = None
+    user_password: str
     active: Optional[bool] = True
+
 
 class UserLoginUpdateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
-    user_login: Optional[str] = None
     user_password: Optional[str] = None
     active: Optional[bool] = None
+
 
 class UserLoginResponseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     user_id: int
-    user_login: str
+    email: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     active: Optional[bool] = True
