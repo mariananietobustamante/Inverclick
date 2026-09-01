@@ -2,6 +2,8 @@
 
 API REST para el semillero de investigación Inverclick. Construida con **FastAPI**, **SQLAlchemy** y **Supabase PostgreSQL**.
 
+> **Documentación de historias de usuario:** ver carpeta [`docs/`](../docs/README.md) (Seguridad V2, Validaciones de usuario).
+
 ---
 
 ## 1. Configuración inicial
