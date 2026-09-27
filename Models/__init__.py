@@ -1,0 +1,29 @@
+"""Registra todos los modelos ORM para que SQLAlchemy resuelva las FK correctamente."""
+
+from Models.banks import BankDTO
+from Models.countries import Country
+from Models.currencies import Currency
+from Models.id_types import IdType
+from Models.num_prefix import NumPrefix
+from Models.users import UserDTO
+from Models.users_login import UserLoginDTO
+from Models.users_role import UserRoleDTO
+from Models.property_sold import PropertySoldDTO, PropertySoldCreateSchema, PropertySoldResponseSchema
+from Models.leads import LeadDTO
+from Models.audit_logs import AuditLogDTO
+
+__all__ = [
+    "Country",
+    "Currency",
+    "IdType",
+    "NumPrefix",
+    "UserDTO",
+    "UserLoginDTO",
+    "UserRoleDTO",
+    "BankDTO",
+    "PropertySoldDTO",
+    "PropertySoldCreateSchema",
+    "PropertySoldResponseSchema",
+    "LeadDTO",
+    "AuditLogDTO"
+]

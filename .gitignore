@@ -1,0 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Variables de entorno
+.env
+
+# VS Code
+.vscode/
+
+# Supabase
+supabase/.temp/

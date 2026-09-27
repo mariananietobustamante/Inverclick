@@ -1,0 +1,7 @@
+CREATE TABLE audit_logs (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    action TEXT NOT NULL,
+    route TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
