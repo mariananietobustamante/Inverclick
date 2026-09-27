@@ -1,6 +1,6 @@
 # Inverclick API
 
-API REST pxara el semillero de investigación Inverclick. Construida con **FastAPI**, **SQLAlchemy** y **Supabase PostgreSQL**.
+API REST para el semillero de investigación Inverclick. Construida con **FastAPI**, **SQLAlchemy** y **Supabase PostgreSQL**.
 
 > **Documentación de historias de usuario:** ver carpeta [`docs/`](./docs/README.md) (Seguridad V2, Validaciones, guía paso a paso).
 
@@ -298,16 +298,3 @@ La migración de referencia del esquema remoto está en `supabase/migrations/202
 - Usuarios sin `user_id_role` no pueden iniciar sesión (403).
 - En producción, define siempre `JWT_SECRET_KEY` con un valor seguro.
 - Las respuestas **422** en Swagger son validaciones de Pydantic (formato del JSON); las **400** son reglas de negocio.
-python -m venv .venv // Crear entorno virtual
-source .venv/Scripts/activate // Activar entorno virtual
-.
-# Install dependencies
-pip install fastapi "uvicorn[standard]" pydantic supabase 
-
-.
-# Para levantar postgres en local
-npx supabase start
-
-.
-# Para la conexión a la base de datos
-pip install sqlalchemy psycopg2-binary python-dotenv

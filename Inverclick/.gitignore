@@ -8,9 +8,6 @@ __pycache__/
 
 # VS Code
 .vscode/
-# VS Code / IDE
-.vscode/
-.idea/
 
 # Supabase
 supabase/.temp/
