@@ -1,13 +1,350 @@
-python -m venv .venv // Crear entorno virtual
-source .venv/Scripts/activate // Activar entorno virtual
-.
-# Install dependencies
-pip install fastapi "uvicorn[standard]" pydantic supabase 
+# Inverclick API
 
-.
-# Para levantar postgres en local
+API REST para el semillero de investigación Inverclick. Construida con **FastAPI**, **SQLAlchemy** y **Supabase PostgreSQL**.
+
+**Documentación de historias de usuario:** [`docs/`](./docs/README.md) (Seguridad V2, Validaciones, HU03 Constructoras/Propiedades/Ventas, HU04 Keycloak).
+
+Esta guía sirve para levantar el proyecto **completo** en otro dispositivo (Linux, macOS o Windows). No hace falta haber ejecutado nada en la máquina de desarrollo.
+
+---
+
+## Arranque completo paso a paso
+
+### 1. Requisitos
+
+Instala antes de clonar:
+
+- **Python 3.11 o superior** (`python3 --version` / `py --version`)
+- **Git**
+- **Node.js** (solo si usarás Supabase local: `npx supabase`)
+- **Docker** (solo si usarás Keycloak / SSO)
+- Un Postgres accesible: **Supabase local**, **Supabase cloud** o PostgreSQL propio
+
+### 2. Clonar el repositorio
+
+```bash
+git clone <url-del-repo>
+cd Inverclick
+```
+
+La raíz del repo es la carpeta que contiene `main.py`, `requirements.txt` y `supabase/`. No uses una subcarpeta duplicada.
+
+### 3. Entorno virtual e dependencias
+
+**Linux / macOS:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+**Windows PowerShell:**
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Si PowerShell bloquea scripts: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` y vuelve a activar el venv.
+
+### 4. Variables de entorno
+
+Copia [`.env.example`](./.env.example) a `.env` en la **raíz** del proyecto (el archivo `.env` no se sube a git):
+
+**Linux / macOS:**
+
+```bash
+cp .env.example .env
+```
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edita `.env` y completa al menos:
+
+```env
+DATABASE_URL=postgresql://usuario:password@host:5432/postgres?options=-csearch_path%3Dpublic
+JWT_SECRET_KEY=una-clave-larga-y-secreta
+JWT_EXPIRE_MINUTES=60
+```
+
+| Variable | Obligatoria | Descripción |
+|----------|-------------|-------------|
+| `DATABASE_URL` | Sí | Cadena PostgreSQL (esquema `public`) |
+| `JWT_SECRET_KEY` | Recomendada | Firma JWT (hay valor por defecto solo para desarrollo) |
+| `JWT_EXPIRE_MINUTES` | No | Duración del token (default: `60`) |
+| `JWT_ALGORITHM` | No | Algoritmo JWT (default: `HS256`) |
+| `KEYCLOAK_*` | Solo SSO | Ver [docs/hu04-auth-hibrida-keycloak.md](./docs/hu04-auth-hibrida-keycloak.md) |
+
+### 5. Base de datos (elige una opción)
+
+Las migraciones viven en `supabase/migrations/` (incluye HU03: `agent_id`/`lead_id` en ventas, unique de venta activa y tabla `audit_logs`).
+
+**Opción A — Supabase local (recomendada para pruebas):**
+
+```bash
 npx supabase start
+npx supabase db push
+```
 
-.
-# Para la conexión a la base de datos
-pip install sqlalchemy psycopg2-binary python-dotenv
+Anota la URL de Postgres que imprime `supabase start` y pégala en `DATABASE_URL`.
+
+**Opción B — Postgres remoto / Supabase cloud:**
+
+1. Crea el proyecto o usa uno existente.
+2. Copia la connection string a `DATABASE_URL`.
+3. Aplica **todas** las migraciones de `supabase/migrations/` (incluido `20260928120000_hu03_ventas_auditoria.sql`), por ejemplo con `npx supabase db push` apuntando a ese proyecto, o ejecutando los SQL en orden.
+
+Sin esa última migración, `POST /sales` y los logs de auditoría fallarán.
+
+### 6. Keycloak / SSO (opcional)
+
+Solo si vas a probar HU04:
+
+```bash
+docker compose -f docker-compose.keycloak.yml up -d
+python scripts/setup_keycloak.py
+```
+
+Completa las variables `KEYCLOAK_*` en `.env`. Detalle: [docs/hu04-auth-hibrida-keycloak.md](./docs/hu04-auth-hibrida-keycloak.md).
+
+### 7. Arrancar la API
+
+Con el venv activado, desde la raíz:
+
+```bash
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Alternativa:
+
+```bash
+python main.py
+```
+
+Si el puerto 8000 está ocupado, cierra procesos viejos de `python`/`uvicorn` o usa otro puerto: `--port 8001`.
+
+### 8. Abrir Swagger y autorizar
+
+1. Navegador: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+2. Deben aparecer al menos: Users, UsersLogin, UsersRole, Prefix, Auth, Construction Companies, Real Estate, Construction Phases, Sales, Banks, Leads.
+3. Crea un admin, su login y un token (pasos siguientes). Luego **Authorize** → esquema **BearerAuth** → pega **solo** el `access_token` (sin la palabra `Bearer`).
+
+Si Swagger no muestra Construction Companies u otros módulos de negocio, suele ser un uvicorn viejo en el puerto: mátalo y vuelve a arrancar.
+
+### 9. Primer usuario administrador (sin token)
+
+**`POST /users`**
+
+```json
+{
+  "name": "Admin",
+  "last_name": "Prueba",
+  "email": "admin.prueba@inverclick.com",
+  "identification": "1098765432",
+  "identification_type": "CC",
+  "phone_number": "3001112233",
+  "desired_description": "Usuario admin para pruebas",
+  "user_id_role": 1
+}
+```
+
+Anota el `id`. El seed crea el rol `admin` con id `1` **solo si `user_roles` estaba vacía**. Si la tabla ya tenía datos, consulta `GET /users-role` (tras login) y usa el id del rol `admin`.
+
+**`POST /users-login`**
+
+```json
+{
+  "user_id": 1,
+  "user_password": "ClaveSegura123",
+  "active": true
+}
+```
+
+Sustituye `user_id` por el id real.
+
+**`POST /users-login/login`**
+
+```json
+{
+  "email": "admin.prueba@inverclick.com",
+  "user_password": "ClaveSegura123"
+}
+```
+
+Copia `access_token` y autoriza Swagger.
+
+### 10. Qué probar después
+
+Orden recomendado:
+
+1. [Guía de pruebas](./docs/guia-pruebas-paso-a-paso.md)
+2. [Validaciones de usuario](./docs/hu-validaciones-usuario.md)
+3. [Seguridad JWT](./docs/hu-seguridad-v2.md)
+4. [HU03 constructoras, propiedades, leads y ventas](./docs/hu03-constructoras-propiedades-ventas.md)
+5. (Opcional) [SSO Keycloak](./docs/hu04-auth-hibrida-keycloak.md)
+
+---
+
+## Seguridad (HU Seguridad V2)
+
+### Resumen
+
+| Criterio | Implementación |
+|----------|----------------|
+| Roles y módulos | Tabla `user_roles` con campo `modules[]` |
+| Contraseñas | Bcrypt en `user_login.password_hash` |
+| Autenticación | JWT Bearer con expiración configurable |
+| Autorización | Dependencia `require_module()` por endpoint |
+
+### Archivos principales
+
+| Archivo | Responsabilidad |
+|---------|-----------------|
+| `Services/Security/CryptPass.py` | Hash y verificación de contraseñas (bcrypt) |
+| `Services/Security/JwtService.py` | Creación y decodificación de tokens JWT |
+| `Services/Security/auth_dependencies.py` | `get_current_user`, `require_module` |
+| `Models/auth.py` | `AuthContext`, `LoginTokenResponseSchema` |
+| `Repositories/seed_reference_data.py` | Seed de `id_types` y roles por defecto |
+
+### Módulos de la API
+
+Definidos en `Utils/enums.py` (`AppModule`):
+
+| Módulo | Endpoints protegidos |
+|--------|----------------------|
+| `users` | CRUD de usuarios (excepto creación) |
+| `prefix` | Prefijos telefónicos |
+| `users-role` | CRUD de roles |
+| `users-login` | CRUD de logins (excepto creación y login) |
+| `propiedades` | `/real-estate`, `/construction-phases` |
+| `construction-companies` | `/construction-companies` |
+| `sales` | `/sales` |
+| `leads` | `/leads` |
+
+Un rol con el módulo `"all"` en `user_roles.modules` tiene acceso a todos los módulos. El seed mantiene el rol `constructora` con `construction-companies`, `propiedades` y `sales` (**sin** `leads`). El rol `admin` recibe los módulos actuales, incluido `leads`.
+
+### Endpoints públicos (sin token)
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/users` | Crear usuario |
+| `POST` | `/users-login` | Crear credenciales de login |
+| `POST` | `/users-login/login` | Iniciar sesión local |
+| `GET` | `/auth/keycloak` | Redirect a Keycloak (SSO) |
+| `GET` | `/auth/keycloak/callback` | Callback OAuth → JWT local |
+
+El resto de endpoints requieren header `Authorization: Bearer <token>`.
+
+### Códigos de error de seguridad
+
+| Código | Situación |
+|--------|-----------|
+| `401` | Token ausente, inválido o expirado |
+| `403` | Usuario sin rol, sin módulos, o sin permiso para el módulo |
+| `404` | Usuario o credenciales no encontradas |
+
+---
+
+## Validaciones de negocio
+
+### Archivos
+
+| Archivo | Descripción |
+|---------|-------------|
+| `Utils/user_field_validators.py` | Funciones de validación de campos |
+| `Utils/user_validator.py` | Orquestador `validate_user_business_rules()` |
+| `Services/Impl/UsuariosService.py` | Aplica validaciones en `create()` y `update()` |
+| `Utils/HttpResponses/userHttpResponses.py` | Respuesta HTTP 400 con mensaje descriptivo |
+
+### Reglas aplicadas
+
+| Campo API | Validación |
+|-----------|------------|
+| `name`, `last_name` | Solo letras y espacios (incluye tildes y ñ), 2–50 caracteres |
+| `identification_type` | Debe ser `CC`, `CE`, `PAS`, `NIT` o `PEP` |
+| `identification` | Solo números, 6–15 dígitos |
+| `email` | Formato válido (`usuario@dominio.com`) |
+| `phone_number` | Solo números, 7–10 dígitos (obligatorio al crear) |
+
+En **creación** se validan todos los campos obligatorios. En **actualización** solo se validan los campos enviados en el body.
+
+---
+
+## Mapeo API ↔ Base de datos
+
+La API expone nombres legibles; la BD usa los nombres reales de Supabase. El mapeo está en `Utils/mappers/`.
+
+| Campo API | Columna BD |
+|-----------|------------|
+| `last_name` | `surname` |
+| `identification` | `id_number` |
+| `identification_type` | `id_type_id` (lookup en `id_types`) |
+| `user_id_role` | `role_id` |
+| `residence_city` | `city` |
+| `street_address` | `address` |
+| `phone_number` | `phone` |
+| `monthly_income` / `monthly_outcome` | `income` / `outcome` |
+| `desired_description` | `description` |
+| `date_of_birth` | `birth_date` |
+| `construction_company_id` | `construction_company_id` |
+
+### Tablas principales
+
+- `users`, `user_login`, `user_roles`
+- `construction_companies`, `real_estate`, `leads`, `property_sold`, `audit_logs`
+- `countries`, `num_prefix`, `id_types`, `currencies`
+
+### Seed automático
+
+Al usar la API, `Repositories/seed_reference_data.py` garantiza datos base:
+
+- **Tipos de documento:** CC, CE, PAS, NIT, PEP (si la tabla está vacía)
+- **Roles:** `admin` (`ALL_MODULES`), `cliente`, `operador`, `Usuario` (SSO)
+- **Rol `constructora`:** `construction-companies`, `propiedades` y `sales`
+- **Admin existente:** se le añaden módulos nuevos (p. ej. `leads`) si faltan
+
+---
+
+## Estructura del proyecto
+
+```
+Inverclick/
+├── Controllers/          # Rutas FastAPI (incluye Auth / SSO)
+├── Models/               # DTOs SQLAlchemy y schemas Pydantic
+├── Repositories/         # Acceso a datos + seed
+├── Services/
+│   ├── Impl/             # Lógica de negocio (+ AuthHybridService)
+│   └── Security/         # JWT, bcrypt, Keycloak, autorización
+├── Utils/
+│   ├── mappers/          # Mapeo API ↔ BD
+│   ├── HttpResponses/    # Respuestas HTTP estandarizadas
+│   ├── enums.py          # Tipos de documento y módulos
+│   └── user_field_validators.py
+├── scripts/              # Utilidades (setup Keycloak)
+├── supabase/migrations/  # Esquema, HU03, HU04
+├── docker-compose.keycloak.yml
+├── docs/                 # Historias de usuario
+├── main.py
+├── requirements.txt
+├── .env.example
+└── .env                  # Variables locales (no versionado)
+```
+
+---
+
+## Notas
+
+- El esquema de PostgreSQL es **`public`**, no `inverclick`.
+- Usuarios sin `user_id_role` no pueden iniciar sesión (403).
+- En producción, define siempre `JWT_SECRET_KEY` con un valor seguro.
+- Las respuestas **422** en Swagger son validaciones de Pydantic (formato del JSON); las **400** son reglas de negocio.
+- OpenAPI usa un solo esquema **BearerAuth** (`main.py` + `auth_dependencies.py`) para el botón Authorize.
+- Un usuario con rol `constructora` solo ve sus constructoras, propiedades disponibles y ventas; debe tener `construction_company_id` asignado.

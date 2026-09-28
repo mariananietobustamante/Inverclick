@@ -1,0 +1,19 @@
+# Keycloak local para probar HU04 (SSO) de Inverclick.
+# Uso: docker compose -f docker-compose.keycloak.yml up -d
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: inverclick-keycloak
+    command:
+      - start-dev
+      - --http-port=8080
+      - --hostname-strict=false
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
