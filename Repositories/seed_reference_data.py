@@ -25,6 +25,21 @@ DEFAULT_ROLES: list[tuple[str, list[str]]] = [
         "operador",
         [AppModule.USERS.value, AppModule.USERS_LOGIN.value],
     ),
+    (
+        "Usuario",
+        [AppModule.USERS.value, AppModule.PREFIX.value],
+    ),
+]
+
+SSO_DEFAULT_ROLE_NAME = "Usuario"
+SSO_DEFAULT_MODULES = [AppModule.USERS.value, AppModule.PREFIX.value]
+
+# Rol de negocio: debe poder gestionar constructoras y propiedades
+CONSTRUCTORA_ROLE_NAME = "constructora"
+CONSTRUCTORA_MODULES = [
+    AppModule.CONSTRUCTION_COMPANIES.value,
+    AppModule.REAL_ESTATE.value,
+    AppModule.SALES.value,
 ]
 
 
@@ -49,4 +64,46 @@ def ensure_default_roles(db: Session) -> None:
     now = datetime.now(timezone.utc)
     for role_name, modules in DEFAULT_ROLES:
         db.add(UserRoleDTO(role=role_name, modules=modules, created_at=now))
+    db.commit()
+
+
+def ensure_sso_default_role(db: Session) -> None:
+    """Garantiza el rol 'Usuario' para auto-registro SSO aunque ya existan otros roles."""
+    existing = db.execute(
+        select(UserRoleDTO).where(UserRoleDTO.role == SSO_DEFAULT_ROLE_NAME)
+    ).scalar_one_or_none()
+    if existing is not None:
+        return
+
+    db.add(
+        UserRoleDTO(
+            role=SSO_DEFAULT_ROLE_NAME,
+            modules=SSO_DEFAULT_MODULES,
+            created_at=datetime.now(timezone.utc),
+        )
+    )
+    db.commit()
+
+
+def ensure_constructora_role_modules(db: Session) -> None:
+    """Asegura que el rol constructora tenga los módulos de negocio actuales."""
+    role = db.execute(
+        select(UserRoleDTO).where(UserRoleDTO.role == CONSTRUCTORA_ROLE_NAME)
+    ).scalar_one_or_none()
+    if role is None:
+        db.add(
+            UserRoleDTO(
+                role=CONSTRUCTORA_ROLE_NAME,
+                modules=CONSTRUCTORA_MODULES,
+                created_at=datetime.now(timezone.utc),
+            )
+        )
+        db.commit()
+        return
+
+    current = list(role.modules or [])
+    missing = [m for m in CONSTRUCTORA_MODULES if m not in current]
+    if not missing:
+        return
+    role.modules = current + missing
     db.commit()

@@ -16,7 +16,7 @@ from Repositories.UsersRoleRepository import UsersRoleRepository
 from Services.Security.CryptPass import get_password_hash, verify_password
 from Services.Security.JwtService import JwtService
 from Utils.HttpResponses.userLoginHttpResponses import UserLoginHttpResponses
-from Utils.enums import ALL_MODULES
+from Utils.enums import ALL_MODULES, AuthProvider
 from Utils.mappers.user_login_mapper import to_login_response
 from Utils.user_login_validator import UserLoginValidator
 
@@ -108,6 +108,8 @@ class UsersLoginService:
             user_id=schema.user_id,
             password_hash=get_password_hash(schema.user_password),
             is_active=schema.active if schema.active is not None else True,
+            auth_provider=AuthProvider.LOCAL.value,
+            external_id=None,
             created_at=now,
             updated_at=now,
         )

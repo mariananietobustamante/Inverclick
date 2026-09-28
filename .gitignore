@@ -14,3 +14,11 @@ __pycache__/
 
 # Supabase
 supabase/.temp/
+
+# Carpeta anidada duplicada (legado) — no volver a usar
+Inverclick/
+_ELIMINAR_Inverclick_duplicado/
+
+# Notas / basura local del IDE
+Untitled
+ABRE_ESTA_CARPETA_EN_CURSOR.txt

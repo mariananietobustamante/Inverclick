@@ -21,8 +21,7 @@ def get_all_companies(
     skip: int = 0, 
     limit: int = 100, 
     service: IConstructionCompanyService = Depends(get_company_service),
-    # Agregamos el candado de seguridad pidiendo permiso de administrador (o el que decida tu equipo)
-    _auth=Depends(require_module(AppModule.USERS)) 
+    _auth=Depends(require_module(AppModule.CONSTRUCTION_COMPANIES)),
 ):
     return service.get_all(skip=skip, limit=limit)
 
@@ -30,7 +29,6 @@ def get_all_companies(
 def create_company(
     company: ConstructionCompanyCreateSchema, 
     service: IConstructionCompanyService = Depends(get_company_service),
-    # Agregamos el candado de seguridad
-    _auth=Depends(require_module(AppModule.USERS))
+    _auth=Depends(require_module(AppModule.CONSTRUCTION_COMPANIES)),
 ):
     return service.create(company)

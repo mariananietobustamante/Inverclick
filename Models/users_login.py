@@ -15,12 +15,15 @@ class UserLoginDTO(Base):
     user_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
     )
-    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    # Nullable: usuarios autenticados solo vía Keycloak no tienen contraseña local (HU04).
+    password_hash: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     failed_login_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     refresh_token_hash: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     refresh_token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    auth_provider: Mapped[str] = mapped_column(Text, nullable=False, default="local")
+    external_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -56,3 +59,6 @@ class UserLoginResponseSchema(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     active: Optional[bool] = True
+    auth_provider: Optional[str] = "local"
+    external_id: Optional[str] = None
+    has_local_password: Optional[bool] = None

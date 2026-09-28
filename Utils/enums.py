@@ -29,3 +29,11 @@ class AppModule(str, Enum):
 
 
 ALL_MODULES: list[str] = [module.value for module in AppModule]
+
+
+class AuthProvider(str, Enum):
+    """Origen de autenticación registrado en user_login.auth_provider."""
+
+    LOCAL = "local"
+    KEYCLOAK = "keycloak"
+    HYBRID = "hybrid"

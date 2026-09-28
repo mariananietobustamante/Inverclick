@@ -18,6 +18,10 @@ class UsersLoginRepository:
         statement = select(UserLoginDTO).where(UserLoginDTO.user_id == user_id)
         return self.db.execute(statement).scalar_one_or_none()
 
+    def get_by_external_id(self, external_id: str) -> UserLoginDTO | None:
+        statement = select(UserLoginDTO).where(UserLoginDTO.external_id == external_id)
+        return self.db.execute(statement).scalar_one_or_none()
+
     def get_all(self, skip: int = 0, limit: int = 100) -> list[UserLoginDTO]:
         statement = select(UserLoginDTO).offset(skip).limit(limit)
         return list(self.db.execute(statement).scalars().all())

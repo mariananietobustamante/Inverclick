@@ -10,6 +10,9 @@ class IUsersLoginRepository:
     def get_by_user_id(self, user_id: int) -> UserLoginDTO | None:
         pass
 
+    def get_by_external_id(self, external_id: str) -> UserLoginDTO | None:
+        pass
+
     def get_all(self, skip: int = 0, limit: int = 100) -> list[UserLoginDTO]:
         pass
 

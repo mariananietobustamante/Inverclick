@@ -34,10 +34,17 @@ _register_models()
 def get_db():
     db = SessionLocal()
     try:
-        from Repositories.seed_reference_data import ensure_default_roles, ensure_id_types
+        from Repositories.seed_reference_data import (
+            ensure_constructora_role_modules,
+            ensure_default_roles,
+            ensure_id_types,
+            ensure_sso_default_role,
+        )
 
         ensure_id_types(db)
         ensure_default_roles(db)
+        ensure_sso_default_role(db)
+        ensure_constructora_role_modules(db)
         yield db
     except OperationalError as exc:
         db.rollback()

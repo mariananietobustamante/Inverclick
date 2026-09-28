@@ -6,7 +6,8 @@ from Services.Security.JwtService import JwtService
 from Utils.enums import AppModule
 
 
-bearer_scheme = HTTPBearer(auto_error=False)
+# scheme_name debe coincidir con BearerAuth en main.custom_openapi (botón Authorize de Swagger)
+bearer_scheme = HTTPBearer(auto_error=False, scheme_name="BearerAuth")
 
 
 def _normalize_modules(modules: list[str]) -> list[str]:

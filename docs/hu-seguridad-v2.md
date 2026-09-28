@@ -192,7 +192,7 @@ sequenceDiagram
 | Servicios | `Services/Impl/UsersLoginService.py` |
 | Controladores | `Controllers/UsersController.py`, `UsersLoginController.py`, `UsersRoleController.py`, `Prefixcontroller.py` |
 | Repositorios | `Repositories/seed_reference_data.py`, `UsersRoleRepository.py` |
-| Configuración | `Utils/enums.py` (`AppModule`), `main.py` (OpenAPI BearerAuth) |
+| Configuración | `Utils/enums.py` (`AppModule`: users, prefix, users-role, users-login, propiedades, construction-companies, sales), `main.py` (OpenAPI **BearerAuth** único) |
 
 ---
 
@@ -276,7 +276,7 @@ Ver la sección detallada [**Paso a paso por función**](#paso-a-paso-por-funci�
 
 | Paso | Acción | Resultado esperado |
 |------|--------|-------------------|
-| 1 | En Swagger **Authorize**, pega un token falso: `Bearer token-invalido` | — |
+| 1 | En Swagger **Authorize** (BearerAuth), pega un token falso: `token-invalido` | — |
 | 2 | `GET /users` | `401` — `"Token inválido o expirado"` |
 | 3 | Clic en **Authorize** → **Logout** (dejar vacío) | — |
 | 4 | `GET /users` sin token | `401` — `"Credenciales de autenticación no provistas"` |
@@ -288,7 +288,7 @@ Ver la sección detallada [**Paso a paso por función**](#paso-a-paso-por-funci�
 | Paso | Acción | Resultado esperado |
 |------|--------|-------------------|
 | 1 | Obtén token válido (`POST /users-login/login`) | `200` |
-| 2 | Authorize en Swagger con `Bearer <token>` | — |
+| 2 | Authorize en Swagger (BearerAuth) con solo el `<token>` | — |
 | 3 | `GET /users` | `200` — lista de usuarios (el token fue aceptado y decodificado) |
 
 ---
@@ -399,7 +399,8 @@ Ver la sección detallada [**Paso a paso por función**](#paso-a-paso-por-funci�
 2. **Endpoints de onboarding públicos:** Crear usuario y credenciales no requiere token para permitir el flujo inicial.
 3. **Módulo `"all"` como comodín:** Simplifica el rol administrador sin listar cada módulo manualmente.
 4. **Seed condicional:** Los roles y tipos de documento solo se insertan si la tabla está vacía, para no sobrescribir datos existentes en Supabase.
-5. **Swagger Bearer:** `main.py` registra el esquema `BearerAuth` en OpenAPI para probar desde `/docs`.
+5. **Swagger Bearer:** `HTTPBearer(scheme_name="BearerAuth")` + `main.custom_openapi` exponen un solo esquema Authorize. Pega solo el JWT (sin prefijo `Bearer`).
+6. **Módulos de negocio:** `/construction-companies` exige `construction-companies`; `/real-estate` y fases exigen `propiedades`; `/sales` exige `sales`. El rol `constructora` se sincroniza en el seed.
 
 ---
 

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from Controllers import BanksController, ConstructionCompanyController, ConstructionPhasesController, LeadsController, PropertySoldController, RealEstateController
+from Controllers.AuthController import router as auth_router
 from Controllers.Prefixcontroller import router as prefix_router
 from Controllers.UsersController import router as users_router
 from Controllers.UsersLoginController import router as users_login_router
@@ -14,8 +15,8 @@ verify_db_connection_and_schema()
 
 app = FastAPI(
     title="Inverclick API",
-    description="API para el semillero de investigación Inverclick",
-    version="2.0.0",
+    description="API para el semillero de investigación Inverclick (auth híbrida local + Keycloak)",
+    version="2.1.0",
 )
 
 app.add_middleware(
@@ -32,6 +33,7 @@ app.include_router(users_router)
 app.include_router(prefix_router)
 app.include_router(users_role_router)
 app.include_router(users_login_router)
+app.include_router(auth_router)
 app.include_router(RealEstateController.router)
 app.include_router(ConstructionCompanyController.router)
 app.include_router(ConstructionPhasesController.router)
@@ -48,10 +50,14 @@ def custom_openapi():
         description=app.description,
         routes=app.routes,
     )
-    openapi_schema.setdefault("components", {}).setdefault("securitySchemes", {})["BearerAuth"] = {
+    # Un solo esquema Authorize en Swagger (HTTPBearer usa scheme_name="BearerAuth")
+    schemes = openapi_schema.setdefault("components", {}).setdefault("securitySchemes", {})
+    schemes.pop("HTTPBearer", None)
+    schemes["BearerAuth"] = {
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
+        "description": "Pega solo el access_token (sin la palabra Bearer).",
     }
     app.openapi_schema = openapi_schema
     return app.openapi_schema

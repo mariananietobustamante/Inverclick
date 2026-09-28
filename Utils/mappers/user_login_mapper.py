@@ -9,4 +9,7 @@ def to_login_response(login: UserLoginDTO, email: str | None = None) -> UserLogi
         created_at=login.created_at,
         updated_at=login.updated_at,
         active=login.is_active,
+        auth_provider=getattr(login, "auth_provider", None) or "local",
+        external_id=getattr(login, "external_id", None),
+        has_local_password=bool(login.password_hash),
     )
