@@ -400,7 +400,7 @@ Ver la sección detallada [**Paso a paso por función**](#paso-a-paso-por-funci�
 3. **Módulo `"all"` como comodín:** Simplifica el rol administrador sin listar cada módulo manualmente.
 4. **Seed condicional:** Los roles y tipos de documento solo se insertan si la tabla está vacía, para no sobrescribir datos existentes en Supabase.
 5. **Swagger Bearer:** `HTTPBearer(scheme_name="BearerAuth")` + `main.custom_openapi` exponen un solo esquema Authorize. Pega solo el JWT (sin prefijo `Bearer`).
-6. **Módulos de negocio:** `/construction-companies` exige `construction-companies`; `/real-estate` y fases exigen `propiedades`; `/sales` exige `sales`. El rol `constructora` se sincroniza en el seed.
+6. **Módulos de negocio:** `/construction-companies` exige `construction-companies`; `/real-estate` y fases exigen `propiedades`; `/sales` exige `sales`; `/leads` exige `leads`. El rol `constructora` se sincroniza en el seed (sin `leads`).
 
 ---
 

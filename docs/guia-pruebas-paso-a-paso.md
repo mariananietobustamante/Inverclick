@@ -2,14 +2,26 @@
 
 Esta guía explica cómo probar **cada función implementada** usando Swagger UI. Sirve como complemento de las HUs documentadas en esta carpeta.
 
+El arranque del proyecto en **otro dispositivo** (venv, `.env`, migraciones, uvicorn) está en el [`README`](../README) de la raíz. Aquí se asume que ese arranque ya se hizo.
+
 ---
 
 ## 0. Preparación (hacer una sola vez)
 
 ### Paso 0.1 — Levantar la API
 
+Desde la **raíz del repo** (la carpeta que contiene `main.py`), con el venv activado:
+
+**Linux / macOS:**
+
 ```bash
-# Desde Documents/Inverclick (raíz del repo, no una subcarpeta duplicada)
+source .venv/bin/activate
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
+**Windows PowerShell:**
+
+```powershell
 .\.venv\Scripts\Activate.ps1
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
@@ -118,15 +130,15 @@ Cada sección sigue este formato:
 |---------|------------|
 | [HU Seguridad V2](./hu-seguridad-v2.md#paso-a-paso-por-función) | Roles, Bcrypt, JWT, autorización |
 | [HU Validaciones](./hu-validaciones-usuario.md#paso-a-paso-por-función) | Cada validador de campos de usuario |
+| [HU03 Constructoras / propiedades / ventas](./hu03-constructoras-propiedades-ventas.md) | Aislamiento constructora, unicidad, lead → venta, logs |
 | [HU04 Keycloak](./hu04-auth-hibrida-keycloak.md#paso-a-paso-para-probar) | Login local + SSO |
-| Constructoras / propiedades | `GET`/`POST` `/construction-companies`, `/real-estate` (token con módulo adecuado) |
 
 ---
 
 ## Tips
 
 - Si recibes **401**, el token expiró o no está en Authorize → repite pasos 0.6 y 0.7.
-- Si recibes **403**, el rol no tiene el módulo del endpoint → usa admin (`"all"`) o rol `constructora`.
+- Si recibes **403**, el rol no tiene el módulo del endpoint → usa admin, o rol `constructora` (este último **no** puede usar `/leads`).
 - Si recibes **422**, el JSON tiene formato incorrecto (Pydantic), no es error de negocio.
 - Si recibes **400** en usuarios, es una validación de negocio — lee el campo `detail`.
 - Si Swagger no muestra Construction Companies u otros módulos de negocio, reinicia uvicorn tras matar procesos viejos en el puerto 8000.

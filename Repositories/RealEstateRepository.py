@@ -1,19 +1,28 @@
 from sqlalchemy.orm import Session
+
+from Models.property_sold import PropertySoldDTO
 from Models.real_estate import RealEstateDTO
+
 
 class RealEstateRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    # Función para el Administrador (Trae todo)
-    def get_all(self, skip: int = 0, limit: int = 100):
-        return self.db.query(RealEstateDTO).offset(skip).limit(limit).all()
+    def _exclude_sold(self, query):
+        sold_ids = self.db.query(PropertySoldDTO.real_estate_id).filter(
+            PropertySoldDTO.status.is_(True)
+        )
+        return query.filter(~RealEstateDTO.id.in_(sold_ids))
 
-    # Función para la Constructora (Aísla los datos)
+    def get_all(self, skip: int = 0, limit: int = 100):
+        query = self._exclude_sold(self.db.query(RealEstateDTO))
+        return query.offset(skip).limit(limit).all()
+
     def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100):
-        return self.db.query(RealEstateDTO)\
-            .filter(RealEstateDTO.construction_company_id == company_id)\
-            .offset(skip).limit(limit).all()
+        query = self.db.query(RealEstateDTO).filter(
+            RealEstateDTO.construction_company_id == company_id
+        )
+        return self._exclude_sold(query).offset(skip).limit(limit).all()
 
     def create(self, property_data: dict):
         new_property = RealEstateDTO(**property_data)

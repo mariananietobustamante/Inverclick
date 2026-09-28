@@ -26,9 +26,12 @@ class AppModule(str, Enum):
     REAL_ESTATE = "propiedades"
     CONSTRUCTION_COMPANIES = "construction-companies"
     SALES = "sales"
+    LEADS = "leads"
 
 
 ALL_MODULES: list[str] = [module.value for module in AppModule]
+
+CONSTRUCTORA_ROLE_NAME = "constructora"
 
 
 class AuthProvider(str, Enum):
