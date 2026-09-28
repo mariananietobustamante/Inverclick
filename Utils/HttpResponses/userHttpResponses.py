@@ -53,6 +53,10 @@ class UserHttpResponses:
         return HTTPException(status_code=404, detail="Rol de usuario no encontrado")
 
     @staticmethod
+    def error_construction_company_not_found() -> HTTPException:
+        return HTTPException(status_code=404, detail="Constructora no encontrada")
+
+    @staticmethod
     def error_validation(message: str) -> HTTPException:
         return HTTPException(status_code=400, detail=message)
 

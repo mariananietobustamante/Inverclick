@@ -3,6 +3,7 @@ from typing import Any
 
 from Models.users import UserCreateSchema, UserDTO, UserResponseSchema, UserUpdateSchema
 from Repositories.CountriesRepository import CountriesRepository
+from Repositories.ConstructionCompanyRepository import ConstructionCompanyRepository
 from Repositories.IdTypesRepository import IdTypesRepository
 from Repositories.IUsuariosRepository import IUsuariosRepository
 from Repositories.PrefixRepository import PrefixRepository
@@ -20,6 +21,7 @@ class UsuariosService:
         prefix_repository: PrefixRepository,
         roles_repository: UsersRoleRepository,
         id_types_repository: IdTypesRepository,
+        construction_company_repository: ConstructionCompanyRepository,
         http_responses: UserHttpResponses,
         validator: UserValidator,
     ):
@@ -28,6 +30,7 @@ class UsuariosService:
         self.prefix_repository = prefix_repository
         self.roles_repository = roles_repository
         self.id_types_repository = id_types_repository
+        self.construction_company_repository = construction_company_repository
         self.http_responses = http_responses
         self.validator = validator
 
@@ -64,6 +67,10 @@ class UsuariosService:
 
         if user_id_role is not None and self.roles_repository.get_by_id(user_id_role) is None:
             raise self.http_responses.error_role_not_found()
+
+        company_id = data.get("construction_company_id")
+        if company_id is not None and self.construction_company_repository.get_by_id(company_id) is None:
+            raise self.http_responses.error_construction_company_not_found()
 
         if email and self.repository.get_by_email(email) is not None:
             if is_create:

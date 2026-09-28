@@ -120,9 +120,23 @@
 |------|------|-------------|
 | `id` | `int8` | Primary Identity |
 | `status` | `bool` |  |
-| `user_id` | `int8` |  |
+| `user_id` | `int8` | Comprador |
+| `agent_id` | `int8` | Nullable (filas anteriores a HU03) |
+| `lead_id` | `int8` | Nullable (filas anteriores a HU03) |
 | `bank_id` | `int8` |  Nullable |
-| `real_estate_id` | `int8` |  |
+| `real_estate_id` | `int8` | Unique parcial si `status = true` |
+| `created_at` | `timestamptz` |  |
+
+## Table `audit_logs`
+
+### Columns
+
+| Name | Type | Constraints |
+|------|------|-------------|
+| `id` | `int8` | Primary Identity |
+| `user_id` | `int8` |  Nullable |
+| `action` | `text` | Creación / Edición / Eliminación |
+| `route` | `text` | Endpoint consumido |
 | `created_at` | `timestamptz` |  |
 
 ## Table `real_estate`
@@ -132,13 +146,14 @@
 | Name | Type | Constraints |
 |------|------|-------------|
 | `id` | `int8` | Primary Identity |
+| `name` | `text` | Unique |
 | `cost` | `numeric` |  |
 | `description` | `text` |  Nullable |
-| `address` | `text` |  Nullable |
+| `address` | `text` | Unique |
 | `zip_code` | `text` |  Nullable |
 | `city` | `text` |  Nullable |
 | `stock` | `int4` |  |
-| `construction_company_id` | `int8` |  Nullable |
+| `construction_company_id` | `int8` | Obligatorio |
 | `phase_id` | `int8` |  Nullable |
 | `created_at` | `timestamptz` |  |
 | `updated_at` | `timestamptz` |  |
@@ -199,6 +214,7 @@
 | `updated_at` | `timestamptz` |  |
 | `role_id` | `int8` |  Nullable |
 | `birth_date` | `date` |  Nullable |
+| `construction_company_id` | `int8` |  Nullable |
 
 ## RLS Policies
 

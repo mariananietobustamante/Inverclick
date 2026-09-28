@@ -15,11 +15,9 @@ class PropertySoldDTO(Base):
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     # Trazabilidad requerida por CA3
     # Le quitamos el "public." a users.id
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False) 
-    agent_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False) 
-    
-    # Estos se quedan igual porque leads y real_estate sí tienen el schema public definido en sus clases
-    lead_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("public.leads.id", ondelete="RESTRICT"), nullable=False) 
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
+    agent_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True)
+    lead_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("public.leads.id", ondelete="RESTRICT"), nullable=True)
     real_estate_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("public.real_estate.id", ondelete="RESTRICT"), nullable=False)
     
     bank_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("public.banks.id", ondelete="SET NULL"), nullable=True)
@@ -42,8 +40,8 @@ class PropertySoldResponseSchema(BaseModel):
 
     id: int
     user_id: int
-    agent_id: int
-    lead_id: int
+    agent_id: Optional[int] = None
+    lead_id: Optional[int] = None
     real_estate_id: int
     bank_id: Optional[int] = None
     status: bool

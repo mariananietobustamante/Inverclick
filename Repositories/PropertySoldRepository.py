@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from Models.property_sold import PropertySoldDTO
+from Models.real_estate import RealEstateDTO
 
 
 class PropertySoldRepository:
@@ -15,19 +16,25 @@ class PropertySoldRepository:
         return self.db.execute(statement).scalar_one_or_none()
 
     def check_if_sold(self, real_estate_id: int) -> bool:
-        """
-        Verifica si la propiedad ya está marcada como vendida.
-        Cumple con la Regla de Negocio (Disponibilidad) del CA3.
-        """
         statement = select(PropertySoldDTO).where(
             PropertySoldDTO.real_estate_id == real_estate_id,
-            PropertySoldDTO.status == True
+            PropertySoldDTO.status.is_(True),
         )
         sale = self.db.execute(statement).scalar_one_or_none()
         return sale is not None
 
     def get_all(self, skip: int = 0, limit: int = 100) -> list[PropertySoldDTO]:
         statement = select(PropertySoldDTO).offset(skip).limit(limit)
+        return list(self.db.execute(statement).scalars().all())
+
+    def get_by_company(self, company_id: int, skip: int = 0, limit: int = 100) -> list[PropertySoldDTO]:
+        statement = (
+            select(PropertySoldDTO)
+            .join(RealEstateDTO, PropertySoldDTO.real_estate_id == RealEstateDTO.id)
+            .where(RealEstateDTO.construction_company_id == company_id)
+            .offset(skip)
+            .limit(limit)
+        )
         return list(self.db.execute(statement).scalars().all())
 
     def create(self, sale_dto: PropertySoldDTO) -> PropertySoldDTO:

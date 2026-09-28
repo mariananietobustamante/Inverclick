@@ -8,6 +8,8 @@ from Models.users import UserCreateSchema, UserResponseSchema, UserUpdateSchema
 
 from Repositories.CountriesRepository import CountriesRepository
 
+from Repositories.ConstructionCompanyRepository import ConstructionCompanyRepository
+
 from Repositories.IdTypesRepository import IdTypesRepository
 
 from Repositories.PrefixRepository import PrefixRepository
@@ -51,6 +53,8 @@ def get_usuarios_service(db: Session = Depends(get_db)) -> IUsuariosService:
         roles_repository=UsersRoleRepository(db),
 
         id_types_repository=IdTypesRepository(db),
+
+        construction_company_repository=ConstructionCompanyRepository(db),
 
         http_responses=UserHttpResponses(),
 

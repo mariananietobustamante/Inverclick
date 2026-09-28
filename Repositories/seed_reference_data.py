@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from Models.id_types import IdType
 from Models.users_role import UserRoleDTO
-from Utils.enums import ALL_MODULES, AppModule, IdentificationTypeEnum
+from Utils.enums import ALL_MODULES, AppModule, CONSTRUCTORA_ROLE_NAME, IdentificationTypeEnum
 
 DEFAULT_ID_TYPES: list[tuple[str, str]] = [
     (IdentificationTypeEnum.CC.value, "Cédula de ciudadanía"),
@@ -34,13 +34,13 @@ DEFAULT_ROLES: list[tuple[str, list[str]]] = [
 SSO_DEFAULT_ROLE_NAME = "Usuario"
 SSO_DEFAULT_MODULES = [AppModule.USERS.value, AppModule.PREFIX.value]
 
-# Rol de negocio: debe poder gestionar constructoras y propiedades
-CONSTRUCTORA_ROLE_NAME = "constructora"
 CONSTRUCTORA_MODULES = [
     AppModule.CONSTRUCTION_COMPANIES.value,
     AppModule.REAL_ESTATE.value,
     AppModule.SALES.value,
 ]
+
+ADMIN_ROLE_NAME = "admin"
 
 
 def ensure_id_types(db: Session) -> None:
@@ -103,6 +103,23 @@ def ensure_constructora_role_modules(db: Session) -> None:
 
     current = list(role.modules or [])
     missing = [m for m in CONSTRUCTORA_MODULES if m not in current]
+    if not missing:
+        return
+    role.modules = current + missing
+    db.commit()
+
+
+def ensure_admin_all_modules(db: Session) -> None:
+    """Añade módulos nuevos (p. ej. leads) al rol admin si se sembró con una lista fija."""
+    role = db.execute(
+        select(UserRoleDTO).where(UserRoleDTO.role == ADMIN_ROLE_NAME)
+    ).scalar_one_or_none()
+    if role is None:
+        return
+    current = list(role.modules or [])
+    if "all" in current:
+        return
+    missing = [module for module in ALL_MODULES if module not in current]
     if not missing:
         return
     role.modules = current + missing
