@@ -13,7 +13,7 @@ AUDIT_ACTION_BY_METHOD = {
     "DELETE": "Eliminación",
 }
 
-TARGET_MODULES = ("/construction-companies", "/real-estate", "/leads", "/sales")
+TARGET_MODULES = ("/construction-companies", "/real-estate", "/leads", "/sales", "/documents")
 
 
 class AuditLogMiddleware(BaseHTTPMiddleware):

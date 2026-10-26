@@ -1,0 +1,19 @@
+# Abre ESTE proyecto en Cursor
+
+El código unificado está en:
+
+  C:\Users\Asus-PC\Documents\Inverclick
+
+NO se usa la subcarpeta Inverclick\Inverclick (es un duplicado viejo; solo queda un .venv bloqueado).
+
+Pasos:
+1. File → Open Folder → Documents\Inverclick
+2. Cierra la ventana/workspace que apuntaba a Inverclick\Inverclick
+3. Borra la carpeta Inverclick\Inverclick si aún existe (solo .venv)
+4. Arranca la API:
+
+   .\.venv\Scripts\Activate.ps1
+   uvicorn main:app --reload --host 127.0.0.1 --port 8000
+
+Swagger: http://127.0.0.1:8000/docs
+(incluye constructora, bancos, leads, propiedades y /auth/keycloak)

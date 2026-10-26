@@ -22,3 +22,7 @@ _ELIMINAR_Inverclick_duplicado/
 # Notas / basura local del IDE
 Untitled
 ABRE_ESTA_CARPETA_EN_CURSOR.txt
+
+# Binarios de documentos (nunca junto al código fuente)
+storage/
+inverclick-external-storage/

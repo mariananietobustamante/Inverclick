@@ -64,9 +64,12 @@
 | Name | Type | Constraints |
 |------|------|-------------|
 | `id` | `int8` | Primary Identity |
-| `real_estate_id` | `int8` |  |
-| `document_type` | `text` |  |
-| `path` | `text` |  |
+| `user_id` | `int8` | Quién subió el archivo (nullable en filas legacy) |
+| `name` | `text` | Nombre original del documento |
+| `document_type` | `text` | MIME type (ej. `application/pdf`) |
+| `location` | `text` | Ruta externa o URL; el binario no vive en el repo |
+| `real_estate_id` | `int8` | Nullable; asociación a propiedad |
+| `path` | `text` | Legacy (esquema remoto original); no usar en código nuevo |
 | `created_at` | `timestamptz` |  |
 
 ## Table `id_types`
@@ -215,6 +218,7 @@
 | `role_id` | `int8` |  Nullable |
 | `birth_date` | `date` |  Nullable |
 | `construction_company_id` | `int8` |  Nullable |
+| `document_id` | `int8` |  Nullable; documento de perfil (HU05) |
 
 ## RLS Policies
 

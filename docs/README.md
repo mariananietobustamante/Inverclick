@@ -8,6 +8,7 @@
 | Validaciones de negocio — Usuario | [hu-validaciones-usuario.md](./hu-validaciones-usuario.md) | Implementada |
 | Constructoras, propiedades, leads y ventas (HU03) | [hu03-constructoras-propiedades-ventas.md](./hu03-constructoras-propiedades-ventas.md) | Implementada |
 | Auth híbrida Keycloak / SSO (HU04) | [hu04-auth-hibrida-keycloak.md](./hu04-auth-hibrida-keycloak.md) | Implementada |
+| Gestión documental (HU05) | [hu05-gestion-documental.md](./hu05-gestion-documental.md) | Implementada |
 | Guía de pruebas paso a paso | [guia-pruebas-paso-a-paso.md](./guia-pruebas-paso-a-paso.md) | Disponible |
 
 ## Documentación técnica general
@@ -24,4 +25,5 @@ Para configuración, instalación y guía rápida de uso, consulta también:
 2. Prueba las [validaciones de usuario](./hu-validaciones-usuario.md#paso-a-paso-por-función) — no requieren token en creación
 3. Prueba la [seguridad JWT y autorización](./hu-seguridad-v2.md#paso-a-paso-por-función) — requieren token
 4. Prueba [HU03 constructoras, propiedades, leads y ventas](./hu03-constructoras-propiedades-ventas.md)
-5. (Opcional) Prueba [SSO Keycloak](./hu04-auth-hibrida-keycloak.md#paso-a-paso-para-probar)
+5. Prueba [HU05 gestión documental](./hu05-gestion-documental.md)
+6. (Opcional) Prueba [SSO Keycloak](./hu04-auth-hibrida-keycloak.md#paso-a-paso-para-probar)

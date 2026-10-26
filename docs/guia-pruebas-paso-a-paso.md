@@ -132,6 +132,7 @@ Cada sección sigue este formato:
 | [HU Validaciones](./hu-validaciones-usuario.md#paso-a-paso-por-función) | Cada validador de campos de usuario |
 | [HU03 Constructoras / propiedades / ventas](./hu03-constructoras-propiedades-ventas.md) | Aislamiento constructora, unicidad, lead → venta, logs |
 | [HU04 Keycloak](./hu04-auth-hibrida-keycloak.md#paso-a-paso-para-probar) | Login local + SSO |
+| [HU05 Gestión documental](./hu05-gestion-documental.md) | Formatos por rol, storage externo, perfil y propiedades |
 
 ---
 

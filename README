@@ -2,7 +2,7 @@
 
 API REST para el semillero de investigación Inverclick. Construida con **FastAPI**, **SQLAlchemy** y **Supabase PostgreSQL**.
 
-**Documentación de historias de usuario:** [`docs/`](./docs/README.md) (Seguridad V2, Validaciones, HU03 Constructoras/Propiedades/Ventas, HU04 Keycloak).
+**Documentación de historias de usuario:** [`docs/`](./docs/README.md) (Seguridad V2, Validaciones, HU03 Constructoras/Propiedades/Ventas, HU04 Keycloak, HU05 Gestión documental).
 
 Esta guía sirve para levantar el proyecto **completo** en otro dispositivo (Linux, macOS o Windows). No hace falta haber ejecutado nada en la máquina de desarrollo.
 
@@ -82,10 +82,11 @@ JWT_EXPIRE_MINUTES=60
 | `JWT_EXPIRE_MINUTES` | No | Duración del token (default: `60`) |
 | `JWT_ALGORITHM` | No | Algoritmo JWT (default: `HS256`) |
 | `KEYCLOAK_*` | Solo SSO | Ver [docs/hu04-auth-hibrida-keycloak.md](./docs/hu04-auth-hibrida-keycloak.md) |
+| `DOCUMENTS_STORAGE_PATH` | No | Carpeta aislada para archivos (HU05). Default: `~/inverclick-external-storage` |
 
 ### 5. Base de datos (elige una opción)
 
-Las migraciones viven en `supabase/migrations/` (incluye HU03: `agent_id`/`lead_id` en ventas, unique de venta activa y tabla `audit_logs`).
+Las migraciones viven en `supabase/migrations/` (incluye HU03 ventas/auditoría y HU05 documentos: columnas de `documents` y `users.document_id`).
 
 **Opción A — Supabase local (recomendada para pruebas):**
 
@@ -100,9 +101,9 @@ Anota la URL de Postgres que imprime `supabase start` y pégala en `DATABASE_URL
 
 1. Crea el proyecto o usa uno existente.
 2. Copia la connection string a `DATABASE_URL`.
-3. Aplica **todas** las migraciones de `supabase/migrations/` (incluido `20260928120000_hu03_ventas_auditoria.sql`), por ejemplo con `npx supabase db push` apuntando a ese proyecto, o ejecutando los SQL en orden.
+3. Aplica **todas** las migraciones de `supabase/migrations/` (incluido HU03 y `20261026120000_hu05_gestion_documental.sql`), por ejemplo con `npx supabase db push` apuntando a ese proyecto, o ejecutando los SQL en orden.
 
-Sin esa última migración, `POST /sales` y los logs de auditoría fallarán.
+Sin HU03, `POST /sales` y los logs de auditoría fallarán. Sin HU05, `POST /documents` fallará.
 
 ### 6. Keycloak / SSO (opcional)
 
@@ -134,7 +135,7 @@ Si el puerto 8000 está ocupado, cierra procesos viejos de `python`/`uvicorn` o 
 ### 8. Abrir Swagger y autorizar
 
 1. Navegador: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-2. Deben aparecer al menos: Users, UsersLogin, UsersRole, Prefix, Auth, Construction Companies, Real Estate, Construction Phases, Sales, Banks, Leads.
+2. Deben aparecer al menos: Users, UsersLogin, UsersRole, Prefix, Auth, Construction Companies, Real Estate, Construction Phases, Sales, Banks, Leads, Documents.
 3. Crea un admin, su login y un token (pasos siguientes). Luego **Authorize** → esquema **BearerAuth** → pega **solo** el `access_token` (sin la palabra `Bearer`).
 
 Si Swagger no muestra Construction Companies u otros módulos de negocio, suele ser un uvicorn viejo en el puerto: mátalo y vuelve a arrancar.
@@ -228,8 +229,9 @@ Definidos en `Utils/enums.py` (`AppModule`):
 | `construction-companies` | `/construction-companies` |
 | `sales` | `/sales` |
 | `leads` | `/leads` |
+| `documents` | `/documents` |
 
-Un rol con el módulo `"all"` en `user_roles.modules` tiene acceso a todos los módulos. El seed mantiene el rol `constructora` con `construction-companies`, `propiedades` y `sales` (**sin** `leads`). El rol `admin` recibe los módulos actuales, incluido `leads`.
+Un rol con el módulo `"all"` en `user_roles.modules` tiene acceso a todos los módulos. El seed mantiene el rol `constructora` con `construction-companies`, `propiedades`, `sales` y `documents` (**sin** `leads`). El rol `admin` recibe los módulos actuales, incluido `documents`. El rol `cliente` puede usar `/documents` solo con PDF.
 
 ### Endpoints públicos (sin token)
 
@@ -299,7 +301,7 @@ La API expone nombres legibles; la BD usa los nombres reales de Supabase. El map
 ### Tablas principales
 
 - `users`, `user_login`, `user_roles`
-- `construction_companies`, `real_estate`, `leads`, `property_sold`, `audit_logs`
+- `construction_companies`, `real_estate`, `leads`, `property_sold`, `audit_logs`, `documents`
 - `countries`, `num_prefix`, `id_types`, `currencies`
 
 ### Seed automático
@@ -307,9 +309,9 @@ La API expone nombres legibles; la BD usa los nombres reales de Supabase. El map
 Al usar la API, `Repositories/seed_reference_data.py` garantiza datos base:
 
 - **Tipos de documento:** CC, CE, PAS, NIT, PEP (si la tabla está vacía)
-- **Roles:** `admin` (`ALL_MODULES`), `cliente`, `operador`, `Usuario` (SSO)
-- **Rol `constructora`:** `construction-companies`, `propiedades` y `sales`
-- **Admin existente:** se le añaden módulos nuevos (p. ej. `leads`) si faltan
+- **Roles:** `admin` (`ALL_MODULES`), `cliente`, `operador`, `Usuario` (SSO), `ventas`
+- **Rol `constructora`:** `construction-companies`, `propiedades`, `sales` y `documents`
+- **Admin existente:** se le añaden módulos nuevos (p. ej. `documents`) si faltan
 
 ---
 
@@ -329,7 +331,7 @@ Inverclick/
 │   ├── enums.py          # Tipos de documento y módulos
 │   └── user_field_validators.py
 ├── scripts/              # Utilidades (setup Keycloak)
-├── supabase/migrations/  # Esquema, HU03, HU04
+├── supabase/migrations/  # Esquema, HU03, HU04, HU05
 ├── docker-compose.keycloak.yml
 ├── docs/                 # Historias de usuario
 ├── main.py

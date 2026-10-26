@@ -63,11 +63,14 @@
 
 | Name | Type | Constraints |
 |------|------|-------------|
-| `real_estate_id` | `int8` |  |
-| `document_type` | `text` |  |
-| `path` | `text` |  |
-| `created_at` | `timestamptz` |  |
 | `id` | `int8` | Primary Identity |
+| `user_id` | `int8` |  Nullable |
+| `name` | `text` |  |
+| `document_type` | `text` |  |
+| `location` | `text` |  |
+| `real_estate_id` | `int8` |  Nullable |
+| `path` | `text` |  Nullable (legacy) |
+| `created_at` | `timestamptz` |  |
 
 ## Table `id_types`
 
@@ -201,6 +204,7 @@
 | `updated_at` | `timestamptz` |  |
 | `id` | `int8` | Primary Identity |
 | `construction_company_id` | `int8` |  Nullable |
+| `document_id` | `int8` |  Nullable |
 
 ## RLS Policies
 

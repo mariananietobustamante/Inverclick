@@ -114,4 +114,5 @@ def to_response(user: UserDTO, identification_type: Optional[str] = None) -> Use
         created_at=user.created_at,
         date_of_birth=user.birth_date,
         construction_company_id=user.construction_company_id,
+        document_id=user.document_id,
     )

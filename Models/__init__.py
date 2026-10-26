@@ -5,6 +5,7 @@ from Models.banks import BankDTO
 from Models.construction_companies import ConstructionCompanyDTO
 from Models.construction_phases import ConstructionPhaseDTO
 from Models.countries import Country
+from Models.documents import DocumentDTO
 from Models.currencies import Currency
 from Models.id_types import IdType
 from Models.leads import LeadDTO
@@ -21,6 +22,7 @@ __all__ = [
     "ConstructionCompanyDTO",
     "ConstructionPhaseDTO",
     "Country",
+    "DocumentDTO",
     "Currency",
     "IdType",
     "LeadDTO",

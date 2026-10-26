@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from Controllers import BanksController, ConstructionCompanyController, ConstructionPhasesController, LeadsController, PropertySoldController, RealEstateController
+from Controllers import BanksController, ConstructionCompanyController, ConstructionPhasesController, DocumentsController, LeadsController, PropertySoldController, RealEstateController
 from Controllers.AuthController import router as auth_router
 from Controllers.Prefixcontroller import router as prefix_router
 from Controllers.UsersController import router as users_router
@@ -40,6 +40,7 @@ app.include_router(ConstructionPhasesController.router)
 app.include_router(PropertySoldController.router)
 app.include_router(BanksController.router)
 app.include_router(LeadsController.router)
+app.include_router(DocumentsController.router)
 
 def custom_openapi():
     if app.openapi_schema:

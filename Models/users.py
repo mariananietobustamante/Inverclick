@@ -45,6 +45,9 @@ class UserDTO(Base):
     )
     birth_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     construction_company_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("public.construction_companies.id"), nullable=True)
+    document_id: Mapped[Optional[int]] = mapped_column(
+        BigInteger, ForeignKey("public.documents.id", ondelete="SET NULL"), nullable=True
+    )
 
 
 class UserCreateSchema(BaseModel):
@@ -123,3 +126,4 @@ class UserResponseSchema(BaseModel):
     created_at: Optional[datetime] = None
     date_of_birth: Optional[Union[date, datetime]] = None
     construction_company_id: Optional[int] = None
+    document_id: Optional[int] = None
